@@ -1,0 +1,36 @@
+version: '3.8'
+
+services:
+  db:
+    build:
+      context: ./database
+      dockerfile: Dockerfile
+    restart: always
+    environment:
+      POSTGRES_DB: assignment_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    networks:
+      - project_network
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@db:5432/assignment_db
+    networks:
+      - project_network
+    depends_on:
+      - db
+
+networks:
+  project_network:
+    external: true
+
+volumes:
+  pgdata:
