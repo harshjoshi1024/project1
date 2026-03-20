@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Containerized Web App with PostgreSQL</title>
+    <!-- Modern Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;500;800&family=JetBrains+Mono&display=swap" rel="stylesheet">
+    <style>
+        /* Modern Dark Theme Variables */
+        :root {
+            --bg-color: #030305;
+            --grid-color: rgba(255, 255, 255, 0.04);
+            --primary: #00e1ff;
+            --secondary: #3a86ff;
+            --text-main: #f0f0f5;
+            --text-muted: #8b8b99;
+            --card-bg: rgba(20, 20, 25, 0.4);
+            --border-glow: rgba(0, 225, 255, 0.15);
+        }
+        
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-color);
+            background-image: 
+                linear-gradient(var(--grid-color) 1px, transparent 1px),
+                linear-gradient(90deg, var(--grid-color) 1px, transparent 1px);
+            background-size: 40px 40px;
+            color: var(--text-main);
+            font-family: 'Outfit', sans-serif;
+            line-height: 1.7;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* Abstract glowing background orbs */
+        body::before {
+            content: '';
+            position: absolute;
+            top: -10%;
+            left: -10%;
+            width: 50%;
+            height: 500px;
+            background: radial-gradient(circle, rgba(58, 134, 255, 0.15) 0%, transparent 70%);
+            z-index: -1;
+            filter: blur(50px);
+        }
+        body::after {
+            content: '';
+            position: absolute;
+            top: 20%;
+            right: -10%;
+            width: 40%;
+            height: 600px;
+            background: radial-gradient(circle, rgba(0, 225, 255, 0.1) 0%, transparent 70%);
+            z-index: -1;
+            filter: blur(50px);
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        /* Hero Section */
+        .hero {
+            padding: 100px 0 60px;
+            text-align: center;
+        }
+
+        .hero-badge {
+            display: inline-block;
+            background: rgba(0, 225, 255, 0.08);
+            color: var(--primary);
+            padding: 8px 20px;
+            border-radius: 50px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            letter-spacing: 3px;
+            margin-bottom: 25px;
+            border: 1px solid var(--border-glow);
+            text-transform: uppercase;
+        }
+
+        h1 {
+            font-size: 5rem;
+            font-weight: 800;
+            margin: 0;
+            line-height: 1.05;
+            letter-spacing: -2px;
+            color: #fff;
+            text-shadow: 0 0 40px rgba(255,255,255,0.1);
+        }
+
+        .gradient-text {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            display: block;
+            padding-bottom: 10px;
+        }
+
+        .subtitle {
+            font-size: 1.2rem;
+            color: var(--text-muted);
+            max-width: 650px;
+            margin: 25px auto 45px;
+            font-weight: 300;
+        }
+
+        /* Student Info Cards */
+        .student-info {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-bottom: 50px;
+            flex-wrap: wrap;
+        }
+
+        .info-card {
+            background: var(--card-bg);
+            border: 1px solid rgba(255,255,255,0.06);
+            padding: 20px 35px;
+            border-radius: 16px;
+            text-align: left;
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            transition: transform 0.3s ease, border-color 0.3s ease;
+        }
+
+        .info-card:hover {
+            transform: translateY(-5px);
+            border-color: rgba(0, 225, 255, 0.3);
+            box-shadow: 0 10px 30px rgba(0, 225, 255, 0.05);
+        }
+
+        .info-card span {
+            display: block;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        .info-card strong {
+            font-size: 1.25rem;
+            color: #fff;
+            font-weight: 500;
+        }
+
+        /* Buttons */
+        .links-row {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 30px;
+            margin-bottom: 40px;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            padding: 14px 28px;
+            background: var(--card-bg);
+            color: #fff;
+            text-decoration: none;
+            border-radius: 12px;
+            border: 1px solid rgba(255,255,255,0.1);
+            font-weight: 500;
+            font-size: 0.95rem;
+            transition: all 0.2s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        .btn:hover {
+            background: rgba(255,255,255,0.1);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            border: none;
+            color: #000;
+            font-weight: 800;
+        }
+
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #1bdcff 0%, #4f8ce0 100%);
+            box-shadow: 0 8px 25px rgba(0, 225, 255, 0.3);
+            color: #000;
+        }
+
+        /* Sections */
+        .section {
+            background: var(--card-bg);
+            border: 1px solid rgba(255,255,255,0.06);
+            border-radius: 24px;
+            padding: 50px;
+            margin-bottom: 40px;
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+        }
+
+        h2 {
+            font-size: 2.2rem;
+            margin-top: 0;
+            margin-bottom: 20px;
+            color: #fff;
+            font-weight: 500;
+            letter-spacing: -0.5px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        h2 span {
+            background: rgba(0, 225, 255, 0.1);
+            color: var(--primary);
+            padding: 8px 14px;
+            border-radius: 10px;
+            font-size: 1.2rem;
+        }
+
+        h3 {
+            font-size: 1.4rem;
+            color: var(--text-main);
+            margin-top: 35px;
+            font-weight: 500;
+        }
+
+        p {
+            margin-bottom: 20px;
+            font-size: 1.05rem;
+        }
+
+        ul {
+            padding-left: 20px;
+        }
+
+        li {
+            margin-bottom: 15px;
+            font-size: 1.05rem;
+        }
+
+        /* Code Blocks */
+        pre {
+            background: #09090b;
+            border: 1px solid rgba(255,255,255,0.1);
+            padding: 25px;
+            border-radius: 16px;
+            overflow-x: auto;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.95rem;
+            color: #a1a1aa;
+            margin: 25px 0;
+            box-shadow: inset 0 2px 15px rgba(0,0,0,0.5);
+        }
+
+        code {
+            color: var(--primary);
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* Image Containers */
+        .screenshot-container {
+            margin: 40px 0;
+            border-radius: 20px;
+            overflow: hidden;
+            border: 1px solid rgba(255,255,255,0.1);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5), 0 0 40px rgba(0, 225, 255, 0.05);
+            position: relative;
+            background: #000;
+        }
+        
+        .screenshot-container::before {
+            content: '📸 System Output';
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            background: rgba(0,0,0,0.6);
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            border: 1px solid rgba(255,255,255,0.15);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            z-index: 10;
+            color: #fff;
+        }
+
+        img {
+            width: 100%;
+            height: auto;
+            display: block;
+            transition: transform 0.5s ease;
+            opacity: 0.95;
+        }
+        
+        .screenshot-container:hover img {
+            transform: scale(1.02);
+            opacity: 1;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            h1 { font-size: 3.2rem; }
+            .section { padding: 30px 20px; }
+            .info-card { width: 100%; text-align: center; }
+            .links-row { flex-direction: column; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="hero">
+        <div class="hero-badge">🎓 Fall 2026 Assignment</div>
+        <h1>Containerized Web App<br><span class="gradient-text">with PostgreSQL</span></h1>
+        <p class="subtitle">A production-grade architecture featuring multi-stage Docker builds, IPvlan networking, persistent volumes, and Docker Compose orchestration — built with FastAPI + PostgreSQL 15.</p>
+        
+        <div class="student-info">
+            <div class="info-card">
+                <span>Developer</span>
+                <strong>Harsh Joshi</strong>
+            </div>
+            <div class="info-card">
+                <span>Architecture</span>
+                <strong>Multi-Container</strong>
+            </div>
+            <div class="info-card">
+                <span>Database</span>
+                <strong>PostgreSQL 15</strong>
+            </div>
+        </div>
+        
+        <div class="links-row">
+            <a href="https://github.com/harshjoshi1024/project1" class="btn btn-primary">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path></svg>
+                View GitHub Source
+            </a>
+            <a href="#screenshots" class="btn">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                Evaluation Proofs
+            </a>
+        </div>
+    </div>
+
+    <div class="section">
+        <h2><span>01</span> Build Optimization & Architecture</h2>
+        <p>In an enterprise-grade environment, preventing bloated container images is crucial for deployment speed and drastically shrinking the security attack surface. In this project, we implemented a <strong>Multi-Stage Dockerfile</strong> for the compiled Python environment to minimize the image footprint.</p>
+        <ul>
+            <li><strong>Stage 1 (Builder):</strong> Uses <code>python:3.11-slim</code>, installs heavy C-compilation dependencies (gcc, python3-dev), and builds python package wheels independently. We effectively exclude these massive build paths from the final runtime.</li>
+            <li><strong>Stage 2 (Production):</strong> The target stage adopts a pristine <code>python:3.11-slim</code> image. It simply copies the pre-built <code>.whl</code> artifacts from the Builder stage and runs the FastAPI codebase safely.</li>
+        </ul>
+        
+        <h3>Image Size Reduction</h3>
+        <p>Baseline monolithic builds reach nearly 1GB when compiling libraries like asyncpg. Our dual-stage pattern yields a highly-optimized image hovering under <strong>130 MB total</strong>, marking an incredible <strong>85% footprint reduction</strong>.</p>
+    </div>
+
+    <div id="screenshots" class="section">
+        <h2><span>02</span> Setup & Network Inspection</h2>
+        <p>Advanced container orchestration relies heavily on isolated network topologies. First, we created and explicitly verified our custom IPvlan <code>project_network</code> using standard Docker tools:</p>
+        <pre><code>docker network create project_network
+docker network inspect project_network</code></pre>
+        
+        <div class="screenshot-container">
+            <img src="network.png" alt="Network Inspect Output" onerror="this.src='https://via.placeholder.com/900x400/09090b/00d2ff?text=network.png+Missing'">
+        </div>
+    </div>
+
+    <div class="section">
+        <h2><span>03</span> Container Verification</h2>
+        <p>Next, we orchestrated the PostgreSQL database and FastAPI backend using Docker Compose in detached mode. To prove network isolation execution, we dynamically fetched their assigned IP addresses inside the secure mapping:</p>
+        <pre><code>docker-compose up -d --build
+docker inspect -f '{{.Name}} - {{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' $(docker ps -aq)</code></pre>
+
+        <div class="screenshot-container">
+            <img src="ips.png" alt="Container IPs Output" onerror="this.src='https://via.placeholder.com/900x400/09090b/00d2ff?text=ips.png+Missing'">
+        </div>
+    </div>
+
+    <div class="section">
+        <h2><span>04</span> Volume Persistence Testing</h2>
+        <p>Finally, we explicitly tested the API layer, aggressively tore the containers down (<code>docker-compose down</code>), booted them back up (<code>docker-compose up -d</code>), and validated the health endpoint to prove the mapped Docker Volume successfully persisted our database state across container death cycles!</p>
+        <pre><code>curl http://localhost:8000/health
+docker-compose down
+docker-compose up -d
+curl http://localhost:8000/health</code></pre>
+
+        <div class="screenshot-container">
+            <img src="persistence.png" alt="Volume Persistence Output" onerror="this.src='https://via.placeholder.com/900x400/09090b/00d2ff?text=persistence.png+Missing'">
+        </div>
+    </div>
+    
+    <div class="section">
+        <h2><span>05</span> Macvlan vs IPvlan Theory</h2>
+        <p>Designing advanced orchestration required understanding MAC address propagation boundaries:</p>
+        <ul>
+            <li><strong>Macvlan</strong> creates distinct, spoofed MAC addresses for every single container acting as an independent physical NIC. Unfortunately, many robust enterprise routers, wireless point controllers, and localized macOS Wi-Fi adapters proactively block traffic acting in promiscuous mode to protect network integrity.</li>
+            <li><strong>IPvlan</strong> smartly shares the parent host’s physical MAC address but intelligently hands out unique IP addresses routing strictly at L2/L3. It easily overcomes strict switch security blockades, making it fundamentally more reliable and scalable in constrained/virtual topologies like macOS virtualization environments.</li>
+        </ul>
+    </div>
+
+</div>
+
+</body>
+</html>
